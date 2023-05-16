@@ -1,5 +1,5 @@
 use std::fmt;
-use std::ops::Add;
+use std::ops::{Add, Mul};
 
 use plotly::common::Title;
 use plotly::{Plot, Scatter};
@@ -31,11 +31,25 @@ fn main() {
     println!("d2 {}", d2);
     println!("slope {}", (d2 - d1) / h);
 
-    let a = Value { data: 2.0 };
-    let b = Value { data: -3.0 };
-    println!("{}", a);
-    let x = a + b;
+    let a = Value {
+        data: 2.0,
+        prev: vec![],
+        op: "".to_string(),
+    };
+    let b = Value {
+        data: -3.0,
+        prev: vec![],
+        op: "".to_string(),
+    };
+    let c = Value {
+        data: 10.0,
+        prev: vec![],
+        op: "".to_string(),
+    };
+    let x = a * b + c;
     println!("{}", x);
+    println!("{:?}", x.prev);
+    println!("{}", x.op);
 }
 
 fn f(x: f64) -> f64 {
@@ -78,8 +92,11 @@ fn print_parabola(xs: Vec<f32>, ys: Vec<f32>) {
     plot.show();
 }
 
+#[derive(Debug, Clone)]
 struct Value {
-    pub data: f64,
+    data: f64,
+    prev: Vec<Value>,
+    op: String,
 }
 
 impl fmt::Display for Value {
@@ -93,8 +110,38 @@ impl Add for Value {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
+        let new_data = self.data + other.data;
+        let mut prev_data = self.prev.to_vec();
+
+        prev_data.push(Value {
+            data: new_data,
+            prev: vec![],
+            op: "+".to_string(),
+        });
         Self {
-            data: self.data + other.data,
+            data: new_data,
+            prev: prev_data,
+            op: "+".to_string(),
+        }
+    }
+}
+
+impl Mul for Value {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self {
+        let new_data = self.data * other.data;
+        let mut prev_data = self.prev.to_vec();
+
+        prev_data.push(Value {
+            data: new_data,
+            prev: vec![],
+            op: "*".to_string(),
+        });
+        Self {
+            data: new_data,
+            prev: prev_data,
+            op: "*".to_string(),
         }
     }
 }
